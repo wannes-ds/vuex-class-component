@@ -71,7 +71,7 @@ function initializeModuleInternals(cls) {
 function extractVuexModule(cls) {
     var _a, _b, _c, _d;
     var VuexClass = cls;
-    // Check if module has been cached, 
+    // Check if module has been cached,
     // and just return the cached version.
     if (VuexClass.prototype.__vuex_module_cache__) {
         return VuexClass.prototype.__vuex_module_cache__;
@@ -89,9 +89,9 @@ function extractVuexModule(cls) {
     var vuexModule = {
         namespaced: VuexClass.prototype.__options__ && VuexClass.prototype.__options__.namespaced ? true : false,
         state: fromInstance.state,
-        mutations: __assign({}, fromPrototype.mutations.explicitMutations, fromPrototype.mutations.setterMutations, (_a = {}, _a["__" + className + "_internal_mutator__"] = mutations_1.internalMutator, _a)),
-        getters: __assign({}, fromPrototype.getters, fromInstance.getters, (_b = {}, _b["__" + className + "_internal_getter__"] = getters_1.internalGetter, _b)),
-        actions: __assign({}, fromPrototype.actions, (_c = {}, _c["__" + className + "_internal_action__"] = actions_1.internalAction, _c)),
+        mutations: __assign(__assign(__assign({}, fromPrototype.mutations.explicitMutations), fromPrototype.mutations.setterMutations), (_a = {}, _a["__" + className + "_internal_mutator__"] = mutations_1.internalMutator, _a)),
+        getters: __assign(__assign(__assign({}, fromPrototype.getters), fromInstance.getters), (_b = {}, _b["__" + className + "_internal_getter__"] = getters_1.internalGetter, _b)),
+        actions: __assign(__assign({}, fromPrototype.actions), (_c = {}, _c["__" + className + "_internal_action__"] = actions_1.internalAction, _c)),
         modules: fromInstance.submodules,
     };
     // Cache the vuex module on the class.
@@ -134,7 +134,7 @@ function extractModulesFromInstance(cls) {
         submodules: submodules,
         mutations: mutations,
         getters: extractDecoratorGetterNames(cls.prototype.__decorator_getter_names__),
-        // Check if the vuex module is targeting nuxt return state as function. if not define state as normal.    
+        // Check if the vuex module is targeting nuxt return state as function. if not define state as normal.
         state: moduleOptions.target === "nuxt" ? function () { return state; } : state,
     };
 }
@@ -164,6 +164,7 @@ function extractModulesFromPrototype(cls) {
         if (actionType && actionType.__type__ === "mutate") {
             var func_1 = descriptor.value;
             var action = function (context, payload) {
+                debugger;
                 cls.prototype.__context_store__ = context;
                 var proxy = proxy_1.createLocalProxy(cls, context);
                 if (proxy["$store"] === undefined) {
@@ -200,7 +201,7 @@ function extractModulesFromPrototype(cls) {
         // if the prototype field has setter mutation.
         if (descriptor.set) {
             var mutation = function (state, payload) { return descriptor.set.call(state, payload); };
-            // Before we push a setter mutation We must verify 
+            // Before we push a setter mutation We must verify
             // if that mutation has a corresponding getter.
             // If not, we dissallow it.
             var mutationHasGetter = gettersList.indexOf(field) > -1;

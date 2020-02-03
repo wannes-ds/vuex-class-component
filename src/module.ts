@@ -28,12 +28,12 @@ function defineWithExtension( this:typeof VuexModule & VuexModuleConstructor, op
 
   // Get the old vuex options
   const oldOptions = this.prototype.__options__ = {};
-  
+
   // create a new module constructor
   //@ts-ignore
   const newVuexModule = function(){} as VuexModuleConstructor;
   newVuexModule.prototype.__options__ = {};
-  
+
   // assign all the old options to the new module constructor
   Object.assign( newVuexModule.prototype.__options__, oldOptions );
 
@@ -66,7 +66,7 @@ export function extractVuexModule( cls :typeof VuexModule ) {
 
   const VuexClass = cls as VuexModuleConstructor;
 
-  // Check if module has been cached, 
+  // Check if module has been cached,
   // and just return the cached version.
   if( VuexClass.prototype.__vuex_module_cache__ ) {
     return VuexClass.prototype.__vuex_module_cache__;
@@ -79,7 +79,7 @@ export function extractVuexModule( cls :typeof VuexModule ) {
   const fromPrototype = extractModulesFromPrototype( VuexClass );
 
   // Cache explicit mutations and getter mutations.
-  VuexClass.prototype.__mutations_cache__ = { 
+  VuexClass.prototype.__mutations_cache__ = {
     __explicit_mutations__: fromPrototype.mutations.explicitMutations,
     __setter_mutations__: fromPrototype.mutations.setterMutations,
   }
@@ -105,13 +105,13 @@ export function extractVuexModule( cls :typeof VuexModule ) {
 }
 
 export function getNamespacedPath( cls :VuexModuleConstructor ) {
-  
+
   const namespaced = cls.prototype.__options__ && cls.prototype.__options__.namespaced;
 
   if( namespaced ) cls.prototype.__namespacedPath__ = namespaced.split("/")[0]
 
   return cls.prototype.__namespacedPath__;
-  
+
 }
 
 function extractModulesFromInstance( cls :VuexModuleConstructor ) {
@@ -125,30 +125,30 @@ function extractModulesFromInstance( cls :VuexModuleConstructor ) {
   const moduleOptions = cls.prototype.__options__ || {};
 
   for( let field of classFields ) {
-    
+
     // Check if field is a submodule.
     const fieldIsSubModule = isFieldASubModule( instance, field  );
     if( fieldIsSubModule ) {
       // Cache submodule class
       submodulesCache[ field ] = instance[ field ][ "__submodule_class__" ]
-      
+
       const submodule = extractVuexSubModule( instance, field );
-            
+
       submodules[ field ] = submodule;
-          
+
       continue;
     }
-    
+
     // If field is not a submodule, then it must be a state.
     state[ field ] = instance[ field ];
-        
+
   }
-  
+
   return {
     submodules,
     mutations,
     getters: extractDecoratorGetterNames( cls.prototype.__decorator_getter_names__ ),
-    // Check if the vuex module is targeting nuxt return state as function. if not define state as normal.    
+    // Check if the vuex module is targeting nuxt return state as function. if not define state as normal.
     state: moduleOptions.target === "nuxt" ? () => state : state,
   }
 }
@@ -165,10 +165,10 @@ function extractModulesFromPrototype( cls :VuexModuleConstructor ) {
   const actionNames = cls.prototype.__actions__ || [];
 
   for( let field in descriptors ) {
-    
+
     // Ignore the constructor and module interals.
-    const fieldIsInternal = ( 
-      field === "constructor"             || 
+    const fieldIsInternal = (
+      field === "constructor"             ||
       field === "__options__"             ||
       field === "__vuex_module_cache__"   ||
       field === "__vuex_proxy_cache__"    ||
@@ -180,18 +180,24 @@ function extractModulesFromPrototype( cls :VuexModuleConstructor ) {
 
     const descriptor = descriptors[ field ];
 
-    const actionType = (typeof descriptor.value === "function") && actionNames.find( action => action.__name__ === field );    
+    const actionType = (typeof descriptor.value === "function") && actionNames.find( action => action.__name__ === field );
     // If prototype field is an mutate action
     if( actionType && actionType.__type__ === "mutate" ) {
 
       const func = descriptor.value as Function
-      
-      const action = function( context :any, payload :any ) {
+
+      const action = function(this: VuexObject,  context :any, payload :any ) {
         cls.prototype.__context_store__ = context;
         const proxy = createLocalProxy( cls, context );
-        
-        if( proxy[ "$store" ] === undefined ) { 
+
+        if( proxy[ "$store" ] === undefined ) {
           Object.defineProperty( proxy, "$store", { value: context });
+        }
+
+        for (const name in this) {
+          if (this.hasOwnProperty(name) && name.startsWith("$")) {
+            Object.defineProperty( proxy, name, { value: this[name] });
+          }
         }
 
         return func.call( proxy, payload )
@@ -214,13 +220,13 @@ function extractModulesFromPrototype( cls :VuexModuleConstructor ) {
     }
 
     // If prototype field is an explicit mutation
-    const fieldIsExplicitMutation = ( 
-      typeof descriptor.value === "function" && 
+    const fieldIsExplicitMutation = (
+      typeof descriptor.value === "function" &&
       explicitMutationNames.indexOf( field ) > -1
     );
     if( fieldIsExplicitMutation ) {
       const mutation = ( state :any, payload :any ) => descriptor.value.call( state, payload );
-            
+
       explicitMutations[ field ] = mutation;
 
       continue;
@@ -228,19 +234,19 @@ function extractModulesFromPrototype( cls :VuexModuleConstructor ) {
 
     // If the prototype field has a getter.
     if( descriptor.get ) {
-      const getter = ( state :any, context :Map ) => { 
+      const getter = ( state :any, context :Map ) => {
         const proxy = createLocalProxy( cls, context )
         return descriptor.get!.call( proxy )
       }
-      
+
       getters[ field ] = getter;
     }
 
     // if the prototype field has setter mutation.
     if( descriptor.set ) {
       const mutation = (state :any, payload :any) => descriptor.set!.call( state, payload );
-      
-      // Before we push a setter mutation We must verify 
+
+      // Before we push a setter mutation We must verify
       // if that mutation has a corresponding getter.
       // If not, we dissallow it.
 
@@ -248,7 +254,7 @@ function extractModulesFromPrototype( cls :VuexModuleConstructor ) {
       if( mutationHasGetter === false ) {
         // Throw an Error.
         throw new Error(
-          `\nImproper Use of Setter Mutations:\n` + 
+          `\nImproper Use of Setter Mutations:\n` +
           `at >>\n` +
           `set ${ field }( payload ) {\n` +
           `\t...\n` +
@@ -263,7 +269,7 @@ function extractModulesFromPrototype( cls :VuexModuleConstructor ) {
           `${ field } = ( payload ) => {\n` +
           ` ...\n` +
           `}`
-        )  
+        )
       }
 
       setterMutations[ field ] = mutation;
@@ -276,7 +282,7 @@ function extractModulesFromPrototype( cls :VuexModuleConstructor ) {
 
   return {
     actions,
-    mutations: { 
+    mutations: {
       explicitMutations,
       setterMutations,
     },
