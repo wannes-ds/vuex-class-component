@@ -16,7 +16,7 @@ class UserSettings extends VuexModule {
 
 @Module({ namespacedPath: 'user/' })
 class UserStore extends VuexModule {
-	
+
 	settings = UserSettings.CreateSubModule(UserSettings)
 
 	private firstname = 'Michael'
@@ -75,7 +75,7 @@ class NuxtUserStore extends VuexModule {
 describe('ExtractVuexModule', () => {
 
 	it('should extract all properties as state', () => {
-		
+
 		const { state } = UserStore.ExtractVuexModule( UserStore )
 
 		expect(state).toEqual({
@@ -90,6 +90,7 @@ describe('ExtractVuexModule', () => {
 	it('should extract all properties as state in a function for NuxtUserStore', () => {
 		const { state } = NuxtUserStore.ExtractVuexModule( NuxtUserStore );
 		expect( typeof state ).toBe( "function" );
+		// @ts-ignore
 		expect( state() ).toEqual({
 			firstname: "Michael",
 			lastname: "Olofinjana",
@@ -118,7 +119,7 @@ describe('ExtractVuexModule', () => {
 		expect(Object.keys(mutations)).toEqual(['changeName', `__${UserStore.name.toLowerCase()}_internal_mutator__`])
 	})
 
-	it('should extract if module is namespaced or not', () => {		
+	it('should extract if module is namespaced or not', () => {
 		expect(UserStore.ExtractVuexModule(UserStore)).toHaveProperty('namespaced', true)
 		expect(UserSettings.ExtractVuexModule(UserSettings)).toHaveProperty('namespaced', false);
 	})

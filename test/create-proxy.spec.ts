@@ -2,7 +2,7 @@
 import Vuex, {Store} from 'vuex'
 // @ts-ignore
 import { createLocalVue } from '@vue/test-utils'
-import { Module, VuexModule, getter, mutation, action } from '../src'
+import {Module, VuexModule, getter, mutation, action, getRawActionContext} from '../src'
 
 
 interface Name {
@@ -87,7 +87,7 @@ class UserStore extends VuexModule {
 }
 
 describe('CreateProxy', () => {
-	
+
 	let store;
 	let localVue;
 
