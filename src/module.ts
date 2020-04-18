@@ -1,12 +1,12 @@
 //@ts-ignore
 import getDescriptors from "object.getownpropertydescriptors";
-import { VuexModuleOptions, VuexModuleConstructor, DictionaryField, VuexModule, VuexObject, Map } from "./interfaces";
-import { isFieldASubModule, extractVuexSubModule } from "./submodule";
-import { createLocalProxy } from './proxy';
-import { toCamelCase } from "./utils";
-import { internalAction } from "./actions";
-import { internalMutator } from "./mutations";
-import { internalGetter } from "./getters";
+import {DictionaryField, Map, VuexModule, VuexModuleConstructor, VuexModuleOptions, VuexObject} from "./interfaces";
+import {extractVuexSubModule, isFieldASubModule} from "./submodule";
+import {createLocalProxy} from './proxy';
+import {toCamelCase} from "./utils";
+import {internalAction} from "./actions";
+import {internalMutator} from "./mutations";
+import {internalGetter} from "./getters";
 
 
 export function createModule( options ?:VuexModuleOptions ) {
@@ -186,24 +186,22 @@ function extractModulesFromPrototype( cls :VuexModuleConstructor ) {
 
       const func = descriptor.value as Function
 
-      const action = function(this: VuexObject,  context :any, payload :any ) {
+      actions[ field ] = function (this: VuexObject, context: any, payload: any) {
         cls.prototype.__context_store__ = context;
-        const proxy = createLocalProxy( cls, context );
+        const proxy = createLocalProxy(cls, context);
 
-        if( proxy[ "$store" ] === undefined ) {
-          Object.defineProperty( proxy, "$store", { value: context });
+        if (proxy["$store"] === undefined) {
+          Object.defineProperty(proxy, "$store", {value: context});
         }
 
         for (const name in this) {
-          if (this.hasOwnProperty(name) && name.startsWith("$")) {
-            Object.defineProperty( proxy, name, { value: this[name] });
+          if (proxy[name] === undefined && this.hasOwnProperty(name) && name.startsWith("$")) {
+            Object.defineProperty(proxy, name, {value: this[name]});
           }
         }
 
-        return func.call( proxy, payload )
-      }
-
-      actions[ field ] = action;
+        return func.call(proxy, payload)
+      };
 
       continue;
     }

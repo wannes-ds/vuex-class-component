@@ -163,20 +163,19 @@ function extractModulesFromPrototype(cls) {
         // If prototype field is an mutate action
         if (actionType && actionType.__type__ === "mutate") {
             var func_1 = descriptor.value;
-            var action = function (context, payload) {
+            actions[field] = function (context, payload) {
                 cls.prototype.__context_store__ = context;
                 var proxy = proxy_1.createLocalProxy(cls, context);
                 if (proxy["$store"] === undefined) {
                     Object.defineProperty(proxy, "$store", { value: context });
                 }
                 for (var name_1 in this) {
-                    if (this.hasOwnProperty(name_1) && name_1.startsWith("$")) {
+                    if (proxy[name_1] === undefined && this.hasOwnProperty(name_1) && name_1.startsWith("$")) {
                         Object.defineProperty(proxy, name_1, { value: this[name_1] });
                     }
                 }
                 return func_1.call(proxy, payload);
             };
-            actions[field] = action;
             return "continue";
         }
         // if prototype field is a raw action
